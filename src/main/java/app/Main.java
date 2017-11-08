@@ -1,9 +1,6 @@
 package main.java.app;
 
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -14,10 +11,10 @@ import main.java.app.mitarbeiter.MitarbeiterVerwaltung;
 
 public class Main extends Application {
 	@Override
-	public void start(Stage primaryStage) throws IOException {
+	public void start(Stage primaryStage) {
 		//TODO Programmstart einlesen
 		try {
-			HBox root = (HBox)FXMLLoader.load(getClass().getResource("Main.fxml"));
+			HBox root = FXMLLoader.load(getClass().getResource("Main.fxml"));
 			Scene scene = new Scene(root);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
@@ -29,7 +26,7 @@ public class Main extends Application {
 		}
 	}
 	
-	public static void main(String[] args) throws URISyntaxException, IOException {
+	public static void main(String[] args) {
 		launch(args);
 	}
 }

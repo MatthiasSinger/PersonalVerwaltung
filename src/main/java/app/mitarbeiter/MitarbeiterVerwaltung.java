@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import main.java.app.MainController;
 
 public class MitarbeiterVerwaltung {
-	public static ArrayList<Mitarbeiter> mitarbeiter;
-	public static MainController mc;
+	private static ArrayList<Mitarbeiter> mitarbeiter;
+	private static MainController mc;
 
 	public static void setMC(MainController mainc) {
 		mc = mainc;

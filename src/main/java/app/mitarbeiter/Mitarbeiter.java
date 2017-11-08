@@ -4,9 +4,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 import main.java.app.mitarbeiter.xml.XMLAttribut;
+import org.jetbrains.annotations.NotNull;
 
 public class Mitarbeiter implements Comparable<Mitarbeiter> {
-	private final ArrayList<XMLAttribut> attribute = new ArrayList<XMLAttribut>();
+	private final ArrayList<XMLAttribut> attribute = new ArrayList<>();
 	private int id;
 
 	public Mitarbeiter(String vorname, String nachname, LocalDate geburtsdatum) {
@@ -39,7 +40,7 @@ public class Mitarbeiter implements Comparable<Mitarbeiter> {
 	}
 
 	@Override
-	public int compareTo(Mitarbeiter o) {
+	public int compareTo(@NotNull Mitarbeiter o) {
 		return this.attribute.get(1).getValue().compareTo(o.attribute.get(1).getValue());
 	}
 }

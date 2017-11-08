@@ -1,7 +1,8 @@
 package main.java.app.mitarbeiter.xml;
 
 public class XMLAttribut {
-	private String name, value;
+	private final String name;
+    private final String value;
 
 	public XMLAttribut(String name, String value) {
 		this.name = name;

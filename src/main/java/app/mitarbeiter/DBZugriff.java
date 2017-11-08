@@ -10,21 +10,21 @@ import java.util.stream.Collectors;
 import main.java.app.mitarbeiter.xml.XMLReader;
 import main.java.app.mitarbeiter.xml.XMLWriter;
 
-public class DBZugriff {
+class DBZugriff {
 	private static List<String> mitarbeiterDB;
-	private static Path path = Paths.get("src/main/resources/MitarbeiterDB.xml");
+	private static final Path path = Paths.get("src/main/resources/MitarbeiterDB.xml");
 
 	public static int getCount() {
 		return Integer.parseInt(mitarbeiterDB.get(0).replaceAll("[\\D]", ""));
 	}
 
-	public static void decCounter() {
+	private static void decCounter() {
 		int a = getCount();
 		mitarbeiterDB.remove(0);
 		mitarbeiterDB.add(0, "<counter>" + (a - 1) + "</counter>");
 	}
 
-	public static void listToXML(List<String> list) throws IOException {
+	private static void listToXML() throws IOException {
 		Files.write(path, mitarbeiterDB);
 	}
 
@@ -41,7 +41,7 @@ public class DBZugriff {
 	public static void neuerMitarbeiter(Mitarbeiter m) {
 		XMLWriter.write(mitarbeiterDB, m);
 		try {
-			listToXML(mitarbeiterDB);
+			listToXML();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -72,6 +72,6 @@ public class DBZugriff {
 		if (!flag)
 			throw new AssertionError("ID nicht gefunden!");
 		decCounter();
-		listToXML(mitarbeiterDB);
+		listToXML();
 	}
 }
