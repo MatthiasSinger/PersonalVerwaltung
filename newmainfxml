@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="569.0" prefWidth="910.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="src.main.java.app.controllers.MainController">
+   <children>
+      <VBox fillWidth="false" maxWidth="250.0" prefHeight="550.0" prefWidth="0.0" HBox.hgrow="ALWAYS">
+         <children>
+            <ListView fx:id="lvMitarbeiter" prefHeight="522.0" prefWidth="250.0">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin></ListView>
+            <HBox maxWidth="50.0" prefHeight="46.0" prefWidth="50.0">
+               <children>
+                  <Button fx:id="butAdd" minWidth="50.0" mnemonicParsing="false" onAction="#add" text="+">
+                     <HBox.margin>
+                        <Insets left="10.0" top="10.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button fx:id="butDelete" minWidth="50.0" mnemonicParsing="false" onAction="#delete" text="-">
+                     <HBox.margin>
+                        <Insets bottom="10.0" left="50.0" right="10.0" top="10.0" />
+                     </HBox.margin>
+                  </Button>
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <VBox>
+      	  <HBox maxWidth="250.0" prefHeight="550.0" prefWidth="596.0" HBox.hgrow="ALWAYS">
+      	  	<ListView fx:id="attributNamenListe" maxHeight="522.0" minWidth="370.0" prefHeight="522.0" prefWidth="275.0" />
+      	  	<ListView fx:id="attributWerteListe" maxHeight="522.0" minWidth="370.0" prefHeight="522.0" prefWidth="376.0" />
+      	  </HBox>	
+      		
+	      <HBox prefHeight="53.0" prefWidth="804.0" spacing="10.0">
+			 <Button fx:id="butExcel" mnemonicParsing="false" onAction="#updateExcel" text="Update Excel" BorderPane.alignment="CENTER">
+		         <BorderPane.margin>
+		            <Insets bottom="1.0" />
+		         </BorderPane.margin>
+		      </Button>
+		      <Button fx:id="butExcelAdd" mnemonicParsing="false" onAction="#addExcelFile" text="Excel Add" BorderPane.alignment="CENTER">
+		         <BorderPane.margin>
+		            <Insets bottom="1.0" />
+		            <Insets left="15.0" />
+		         </BorderPane.margin>
+		      </Button>
+		      <Button fx:id="butExcelShow" mnemonicParsing="false" onAction="#showExcel" text="Excel Anzeigen" BorderPane.alignment="CENTER">
+		         <BorderPane.margin>
+		            <Insets bottom="1.0" />
+		         </BorderPane.margin>
+		      </Button>
+		  	  <Button fx:id="butDienstunfaehigkeit" mnemonicParsing="false" onAction="#dienstunfaehigkeit" text="Dienstunfähigkeit" BorderPane.alignment="CENTER" />
+	      	  <Button fx:id="butDienstbefreiung" mnemonicParsing="false" onAction="#dienstbefreiung" text="Dienstbefreiung" BorderPane.alignment="CENTER" />
+	    	  <Button fx:id="butArbeitsunfaehigkeit" mnemonicParsing="false" onAction="#arbeitsunfaehigkeit" text="Arbeitsunfähigkeit" BorderPane.alignment="CENTER" />
+	          <Button fx:id="butTeilnehmerliste" mnemonicParsing="false" onAction="#teilnehmerliste" text="Teilnehmerliste" BorderPane.alignment="CENTER" />
+            <VBox.margin>
+               <Insets left="5.0" />
+            </VBox.margin>
+	      </HBox>
+      </VBox>
+   </children>
+</HBox>
