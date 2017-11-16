@@ -1,0 +1,338 @@
+package src.main.java.app.controllers;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import org.apache.log4j.Logger;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.ListView;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollBar;
+import javafx.scene.control.cell.TextFieldListCell;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import src.main.java.app.excel.ExcelAttribut;
+import src.main.java.app.excel.ExcelDokument;
+import src.main.java.app.excel.ExcelVerwaltung;
+import src.main.java.app.io.XMLWriter;
+import src.main.java.app.mitarbeiter.Mitarbeiter;
+import src.main.java.app.mitarbeiter.MitarbeiterVerwaltung;
+import src.main.java.app.word.PersonalBogen;
+
+public class MainController {
+
+	private Logger logger = Logger.getLogger(MainController.class);
+
+	@FXML
+	private ListView<Mitarbeiter> lvMitarbeiter;
+	@FXML
+	private ListView<String> attributNamenListe;
+	@FXML
+	private ListView<String> attributWerteListe;
+
+	private MitarbeiterVerwaltung mvw;
+	private ExcelVerwaltung evw;
+	private Stage auswahlFenster;
+	private Stage excelAddFenster;
+	private Stage attributAddFenster;
+	private AuswahlController ac;
+	private ExcelAddController eac;
+	private AttributAddController aac;
+
+	@FXML
+	private void initialize() {
+		logger.info("Start der Initialisierung...");
+		mvw = new MitarbeiterVerwaltung(this);
+		evw = new ExcelVerwaltung(mvw);
+		logger.info("Laden der Attribute...");
+		attributNamenListe.getItems().addAll(mvw.avw.getAttribute());
+		logger.info("Attribute geladen.");
+		lvMitarbeiter.getSelectionModel().selectedItemProperty().addListener(cl -> {
+			Mitarbeiter m = lvMitarbeiter.getSelectionModel().getSelectedItem();
+			if (m != null) {
+				attributWerteListe.getItems().clear();
+				attributWerteListe.getItems().addAll(m.getAttribute());
+			} else {
+				attributWerteListe.getItems().replaceAll(e -> "");
+			}
+		});
+
+		attributWerteListe.setEditable(true);
+		attributWerteListe.setCellFactory(TextFieldListCell.forListView());
+		attributWerteListe.setOnEditCommit(ee -> {
+			if (lvMitarbeiter.getSelectionModel().getSelectedIndex() != -1) {
+				attributWerteListe.getItems().set(ee.getIndex(), ee.getNewValue());
+				save(lvMitarbeiter.getSelectionModel().getSelectedIndex());
+				attributWerteListe.getSelectionModel().select(ee.getIndex() + 1);
+				attributWerteListe.getFocusModel().focus(ee.getIndex() + 1);
+			}
+		});
+
+		try {
+			logger.info("Einlesen des Auswahl.fxml");
+			FXMLLoader loader = new FXMLLoader(
+					getClass().getClassLoader().getResource("src/main/java/app/views/Auswahl.fxml"));
+			VBox root = loader.load();
+			Scene scene = new Scene(root);
+			auswahlFenster = new Stage();
+			auswahlFenster.setScene(scene);
+			ac = loader.<AuswahlController>getController();
+			ac.setExcelVerwaltung(evw);
+			logger.info("Einlesen des ExcelAdd.fxml");
+			FXMLLoader loader2 = new FXMLLoader(
+					getClass().getClassLoader().getResource("src/main/java/app/views/ExcelAdd.fxml"));
+			VBox root2 = loader2.load();
+			Scene scene2 = new Scene(root2);
+			excelAddFenster = new Stage();
+			excelAddFenster.setScene(scene2);
+			eac = loader2.<ExcelAddController>getController();
+			logger.info("Einlesen des AttributAdd.fxml");
+			FXMLLoader loader3 = new FXMLLoader(
+					getClass().getClassLoader().getResource("src/main/java/app/views/AttributAdd.fxml"));
+			VBox root3 = loader3.load();
+			Scene scene3 = new Scene(root3);
+			attributAddFenster = new Stage();
+			attributAddFenster.setScene(scene3);
+			aac = loader3.<AttributAddController>getController();
+			logger.info("Einlesen beendet.");
+		} catch (IOException e2) {
+			logger.error("Fehler beim Einlesen der FXML Dateien", e2);
+		}
+
+		ContextMenu contextMenu = new ContextMenu();
+		MenuItem addItem = new MenuItem("Hinzufügen");
+		addItem.setOnAction(ae -> {
+			addAttribut(attributNamenListe.getSelectionModel().getSelectedIndex());
+		});
+		MenuItem removeItem = new MenuItem("Entfernen");
+		removeItem.setOnAction(ae -> {
+			removeAttribut(attributNamenListe.getSelectionModel().getSelectedIndex());
+		});
+		contextMenu.getItems().addAll(addItem, removeItem);
+		attributNamenListe.setContextMenu(contextMenu);
+		logger.info("Ende der Initialisierung.");
+	}
+
+	private void addAttribut(int selectedIndex) {
+		logger.info("Hinzufügen eines Attributs...");
+		attributAddFenster.showAndWait();
+		if (!aac.getEingabe().equals("")) {
+			mvw.avw.addAttribut(selectedIndex + 1, aac.getEingabe());
+			mvw.addAttributeForEachMitarbeiter(selectedIndex + 1);
+			attributNamenListe.getItems().add(selectedIndex + 1, aac.getEingabe());
+			attributWerteListe.getItems().add(selectedIndex + 1, "");
+		} else {
+			logger.warn("Leeres Attribut wird nicht hinzugefügt!");
+		}
+		logger.info("Hinzufügen eines Attributs beendet.");
+	}
+
+	private void removeAttribut(int selectedIndex) {
+		logger.info("Entfernen des ausgewählten Attributs...");
+		mvw.avw.removeAttribut(attributNamenListe.getItems().get(selectedIndex));
+		mvw.removeAttributeForEachMitarbeiter(selectedIndex);
+		attributNamenListe.getItems().remove(selectedIndex);
+		attributWerteListe.getItems().remove(selectedIndex);
+		logger.info("Entfernen des ausgewählten Attributs beendet.");
+	}
+
+	public void connectScrollBars() {
+		logger.info("Scrollbars werden verbunden...");
+		Node n1 = attributNamenListe.lookup(".scroll-bar");
+		if (n1 instanceof ScrollBar) {
+			final ScrollBar bar1 = (ScrollBar) n1;
+			Node n2 = attributWerteListe.lookup(".scroll-bar");
+			if (n2 instanceof ScrollBar) {
+				final ScrollBar bar2 = (ScrollBar) n2;
+				bar1.valueProperty().bindBidirectional(bar2.valueProperty());
+			}
+		}
+		logger.info("Scrollsbars verbunden.");
+	}
+
+	@FXML
+	private void add() {
+		logger.info("Neuer Mitarbeiter wird hinzugefügt...");
+		lvMitarbeiter.getSelectionModel().clearSelection();
+		ArrayList<String> neueListe = new ArrayList<>();
+		for (int i = 0; i < mvw.avw.getAttribute().size(); i++) {
+			neueListe.add("");
+		}
+		mvw.hinzufuegen(new Mitarbeiter(neueListe, mvw.avw));
+		lvMitarbeiter.getSelectionModel().select(0);
+		lvMitarbeiter.getFocusModel().focus(0);
+		lvMitarbeiter.scrollTo(0);
+		logger.info("Mitarbeiter wurde hinzugefügt.");
+	}
+
+	@FXML
+	private void delete() {
+		logger.info("Mitarbeiter wird gelöscht...");
+		Mitarbeiter m = lvMitarbeiter.getSelectionModel().getSelectedItem();
+		if (m != null) {
+			mvw.entferne(m);
+			logger.info("Mitarbeiter wurde gelöscht.");
+		} else {
+			logger.warn("Drücken des Entfernen Knopfs ohne Auswahl eines Mitarbeiters!");
+		}
+
+	}
+
+	private void save(int selected) {
+		logger.info("Änderung wird gespeichert...");
+		ArrayList<String> arrL = new ArrayList<>();
+		arrL.addAll(attributWerteListe.getItems());
+		Mitarbeiter neu = new Mitarbeiter(arrL, mvw.avw);
+		Mitarbeiter alt = lvMitarbeiter.getSelectionModel().getSelectedItem();
+		mvw.updateMitarbeiter(alt, neu);
+		logger.info("Änderungen wurden gespeichert.");
+		logger.info("Mitarbeiter wird ausgewählt...");
+		lvMitarbeiter.getSelectionModel().select(selected);
+		lvMitarbeiter.getFocusModel().focus(selected);
+		lvMitarbeiter.scrollTo(selected);
+		logger.info("Mitarbeiter ist ausgewählt.");
+	}
+
+	@FXML
+	private void updateExcel() {
+		logger.info("ExcelDokumente werden updated...");
+		for (ExcelDokument ed : evw.getExcelDokumente()) {
+			if (ed != null)
+				ed.update();
+		}
+		logger.info("ExcelDokumente wurden updated.");
+	}
+
+	@FXML
+	private void addExcelFile() {
+		logger.info("Excel Datei wird hinzugefügt...");
+		FileChooser fc = new FileChooser();
+		fc.setTitle("Excel-Tabelle hinzufügen");
+		File f = fc.showOpenDialog(null);
+		if (f != null) {
+			logger.info("Es wurde ein ExcelDokument ausgewählt...");
+			Path path = Paths.get(f.toURI());
+			if (!path.toString().substring(path.toString().length() - 3).equals("xls")) {
+				logger.error("Falsches Dateiformat! Nur für *.xls Dateien möglich!");
+				System.err.println("Falsches Dateiformat! Nur für *.xls Dateien möglich!");
+			} else {
+				logger.info("ExcelDokumentAdd Fenster wird geöffnet...");
+				eac.fillBox();
+				excelAddFenster.showAndWait();
+				logger.info("ExcelDokumentAdd Fenster geschlossen.");
+				ArrayList<ExcelAttribut> struktur = eac.getStruktur();
+				ExcelDokument ed = new ExcelDokument(path, struktur, mvw, mvw.avw);
+				evw.add(ed);
+				logger.info("ExcelDokument hinzugefügt");
+				try {
+					XMLWriter.writeExcelDokument(ed);
+				} catch (IOException e) {
+					logger.error("Schreiben des XML-Dokumentes gescheitert!", e);
+				}
+			}
+		} else {
+			logger.warn("kein File ausgewählt, Hinzufügen wird abgebrochen!");
+		}
+	}
+
+	@FXML
+	private void showExcel() {
+		logger.info("ExcelDokumente werden angezeigt...");
+		ac.setToExcelNames(evw.getExcelDokumente());
+		auswahlFenster.showAndWait();
+		logger.info("ExcelDokumente werden nicht mehr angezeigt.");
+	}
+
+	@FXML
+	private void dienstunfaehigkeit() {
+		logger.info("Dienstunfähigkeit wird erstellt...");
+		Mitarbeiter selectedItem = lvMitarbeiter.getSelectionModel().getSelectedItem();
+		if (selectedItem != null) {
+			try {
+				PersonalBogen.erstelleDokument(selectedItem, mvw.avw, "dienstunfaehigkeit.docx");
+			} catch (InvalidFormatException | IOException e) {
+				logger.error("Fehler beim Erstellen des Dokuments", e);
+			}
+		} else {
+			logger.warn("Kein Mitarbeiter ausgewählt um Dokument zu erstellen!");
+		}
+		logger.info("Dienstunfähigkeit wurde erstellt.");
+	}
+
+	@FXML
+	private void dienstbefreiung() {
+		logger.info("Dienstbefreiung wird erstellt...");
+		Mitarbeiter selectedItem = lvMitarbeiter.getSelectionModel().getSelectedItem();
+		if (selectedItem != null) {
+			try {
+				PersonalBogen.erstelleDokument(selectedItem, mvw.avw, "dienstbefreiung.docx");
+			} catch (InvalidFormatException | IOException e) {
+				logger.error("Fehler beim Erstellen des Dokuments", e);
+			}
+		} else {
+			logger.warn("Kein Mitarbeiter ausgewählt um Dokument zu erstellen!");
+		}
+		logger.info("Dienstbefreiung wurde erstellt.");
+	}
+
+	@FXML
+	private void arbeitsunfaehigkeit() {
+		logger.info("Arbeitsunfähigkeit wird erstellt...");
+		Mitarbeiter selectedItem = lvMitarbeiter.getSelectionModel().getSelectedItem();
+		if (selectedItem != null) {
+			try {
+				PersonalBogen.erstelleDokument(selectedItem, mvw.avw, "arbeitsunfaehigkeit.docx");
+			} catch (InvalidFormatException | IOException e) {
+				logger.error("Fehler beim Erstellen des Dokuments", e);
+			}
+		} else {
+			logger.warn("Kein Mitarbeiter ausgewählt um Dokument zu erstellen!");
+		}
+		logger.info("Arbeitsunfähigkeit wurde erstellt.");
+	}
+
+	@FXML
+	private void teilnehmerliste() {
+		logger.info("Teilnehmerliste wird erstellt...");
+		ac.setToMitarbeiter(mvw.getMitarbeiterListe());
+		auswahlFenster.showAndWait();
+		ArrayList<Mitarbeiter> mList = ac.getSelectedMitarbeiter();
+		if (!mList.isEmpty()) {
+			try {
+				PersonalBogen.erstelleDokument(mList, mvw.avw, "teilnehmerliste.docx");
+			} catch (InvalidFormatException | IOException e) {
+				logger.error("Fehler beim Erstellen des Dokuments", e);
+			}
+		} else {
+			logger.warn("Kein Mitarbeiter ausgewählt um Dokument zu erstellen!");
+		}
+		logger.info("Teilnehmerliste wurde erstellt.");
+	}
+
+	public void updateMitarbeiterList(ArrayList<Mitarbeiter> mitarbeiter) {
+		logger.info("MitarbeiterListe wird updated...");
+		lvMitarbeiter.getItems().clear();
+		Collections.sort(mitarbeiter);
+		lvMitarbeiter.getItems().addAll(mitarbeiter);
+		logger.info("MitarbeiterListe wurde updated.");
+	}
+
+	public void updateAttribute(ArrayList<String> attributNamen) {
+		logger.info("AttributListe wird updated...");
+		attributNamenListe.getItems().clear();
+		attributNamenListe.getItems().addAll(attributNamen);
+		logger.info("AttributListe wurde updated.");
+	}
+
+}
